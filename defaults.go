@@ -139,12 +139,8 @@ func set(field reflect.Value, defaultVal string) error {
 }
 
 func parse(target string) string {
-	switch strings.ToLower(target) {
-	case "%fluid32":
-		return fluid.Encode(uint32(rand.Int32()))
-	case "%fluid64":
-		return fluid.Encode(uint64(rand.Int64()))
-	default:
-		return target
-	}
+	target = strings.ReplaceAll(target, "%fluid32%", fluid.Encode(uint32(rand.Int32())))
+	target = strings.ReplaceAll(target, "%fluid64%", fluid.Encode(uint64(rand.Int64())))
+
+	return target
 }

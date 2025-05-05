@@ -82,8 +82,11 @@ type Sample struct {
 	BoolPtr    *bool    `default:"true"`
 	StringPtr  *string  `default:"hello"`
 
-	StringUID    string  `default:"%fluid32"`
-	StringUIDPtr *string `default:"%fluid64"`
+	StringUID    string  `default:"%fluid32%"`
+	StringUIDPtr *string `default:"%fluid64%"`
+
+	StringUIDCombined    string  `default:"%fluid32%.%fluid64%"`
+	StringUIDCombinedPtr *string `default:"%fluid64%.%fluid64%"`
 
 	MyInt       MyInt     `default:"1"`
 	MyInt8      MyInt8    `default:"8"`
@@ -311,6 +314,12 @@ func TestInit(t *testing.T) {
 			t.Errorf("it should initialize with generators")
 		}
 		if len(*sample.StringUIDPtr) != 13 {
+			t.Errorf("it should initialize with generators")
+		}
+		if len(sample.StringUIDCombined) != 21 {
+			t.Errorf("it should initialize with generators")
+		}
+		if len(*sample.StringUIDCombinedPtr) != 27 {
 			t.Errorf("it should initialize with generators")
 		}
 	})
