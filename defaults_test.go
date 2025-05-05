@@ -85,8 +85,7 @@ type Sample struct {
 	StringUID    string  `default:"%fluid32%"`
 	StringUIDPtr *string `default:"%fluid64%"`
 
-	StringUIDCombined    string  `default:"%fluid32%.%fluid64%"`
-	StringUIDCombinedPtr *string `default:"%fluid64%.%fluid64%"`
+	EmbeddedKey
 
 	MyInt       MyInt     `default:"1"`
 	MyInt8      MyInt8    `default:"8"`
@@ -110,6 +109,11 @@ type Sample struct {
 
 	StructPtrWithNoTag *Struct `default:"."`
 	StructWithNoTag    Struct
+}
+
+type EmbeddedKey struct {
+	StringUIDCombined    string  `default:"%fluid32%.%fluid64%"`
+	StringUIDCombinedPtr *string `default:"%fluid64%.%fluid64%"`
 }
 
 type Struct struct {

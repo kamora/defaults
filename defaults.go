@@ -32,7 +32,7 @@ func Set(ptr interface{}) error {
 	}
 
 	for i := 0; i < t.NumField(); i++ {
-		if defaultVal := t.Field(i).Tag.Get(tagName); defaultVal != "" {
+		if defaultVal := t.Field(i).Tag.Get(tagName); defaultVal != "" || t.Field(i).Anonymous {
 			if err := set(v.Field(i), defaultVal); err != nil {
 				return err
 			}
