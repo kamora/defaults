@@ -3,8 +3,11 @@ package defaults
 import (
 	"errors"
 	"fmt"
+	"github.com/kamora/fluid"
+	"math/rand/v2"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -120,7 +123,7 @@ func set(field reflect.Value, defaultVal string) error {
 		}
 
 	case reflect.String:
-		field.Set(reflect.ValueOf(defaultVal).Convert(field.Type()))
+		field.Set(reflect.ValueOf(parse(defaultVal)).Convert(field.Type()))
 
 	case reflect.Struct:
 		return Set(field.Addr().Interface())
@@ -133,4 +136,15 @@ func set(field reflect.Value, defaultVal string) error {
 	}
 
 	return nil
+}
+
+func parse(target string) string {
+	switch strings.ToLower(target) {
+	case "%fluid32":
+		return fluid.Encode(uint32(rand.Int32()))
+	case "%fluid64":
+		return fluid.Encode(uint64(rand.Int64()))
+	default:
+		return target
+	}
 }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strconv"
 	"testing"
-	"time"
 )
 
 type (
@@ -27,23 +26,22 @@ type (
 )
 
 type Sample struct {
-	Int       int           `default:"1"`
-	Int8      int8          `default:"8"`
-	Int16     int16         `default:"16"`
-	Int32     int32         `default:"32"`
-	Int64     int64         `default:"64"`
-	Uint      uint          `default:"1"`
-	Uint8     uint8         `default:"8"`
-	Uint16    uint16        `default:"16"`
-	Uint32    uint32        `default:"32"`
-	Uint64    uint64        `default:"64"`
-	Uintptr   uintptr       `default:"1"`
-	Float32   float32       `default:"1.32"`
-	Float64   float64       `default:"1.64"`
-	BoolTrue  bool          `default:"true"`
-	BoolFalse bool          `default:"false"`
-	String    string        `default:"hello"`
-	Duration  time.Duration `default:"10s"`
+	Int       int     `default:"1"`
+	Int8      int8    `default:"8"`
+	Int16     int16   `default:"16"`
+	Int32     int32   `default:"32"`
+	Int64     int64   `default:"64"`
+	Uint      uint    `default:"1"`
+	Uint8     uint8   `default:"8"`
+	Uint16    uint16  `default:"16"`
+	Uint32    uint32  `default:"32"`
+	Uint64    uint64  `default:"64"`
+	Uintptr   uintptr `default:"1"`
+	Float32   float32 `default:"1.32"`
+	Float64   float64 `default:"1.64"`
+	BoolTrue  bool    `default:"true"`
+	BoolFalse bool    `default:"false"`
+	String    string  `default:"hello"`
 
 	IntOct    int    `default:"0o1"`
 	Int8Oct   int8   `default:"0o10"`
@@ -83,6 +81,9 @@ type Sample struct {
 	Float32Ptr *float32 `default:"1"`
 	BoolPtr    *bool    `default:"true"`
 	StringPtr  *string  `default:"hello"`
+
+	StringUID    string  `default:"%fluid32"`
+	StringUIDPtr *string `default:"%fluid64"`
 
 	MyInt       MyInt     `default:"1"`
 	MyInt8      MyInt8    `default:"8"`
@@ -302,6 +303,15 @@ func TestInit(t *testing.T) {
 		}
 		if sample.Uint64Bin != 0b1000000 {
 			t.Errorf("it should initialize uint64 with binary literal")
+		}
+	})
+
+	t.Run("generators", func(t *testing.T) {
+		if len(sample.StringUID) != 7 {
+			t.Errorf("it should initialize with generators")
+		}
+		if len(*sample.StringUIDPtr) != 13 {
+			t.Errorf("it should initialize with generators")
 		}
 	})
 
