@@ -1,7 +1,6 @@
 package defaults
 
 import (
-	"errors"
 	"fmt"
 	"github.com/kamora/fluid"
 	"math/rand/v2"
@@ -10,25 +9,20 @@ import (
 	"strings"
 )
 
-var (
-	errInvalidType = errors.New("not a struct pointer")
-)
-
 const (
 	tagName = "default"
 )
 
-// Set initializes members in a struct referenced by a pointer.
 func Set(ptr interface{}) error {
 	if reflect.TypeOf(ptr).Kind() != reflect.Ptr {
-		return errInvalidType
+		return fmt.Errorf("invalid type: %s", reflect.TypeOf(ptr).Kind().String())
 	}
 
 	v := reflect.ValueOf(ptr).Elem()
 	t := v.Type()
 
 	if t.Kind() != reflect.Struct {
-		return errInvalidType
+		return fmt.Errorf("invalid type: %s", reflect.TypeOf(ptr).Kind().String())
 	}
 
 	for i := 0; i < t.NumField(); i++ {
