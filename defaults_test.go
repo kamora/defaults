@@ -108,6 +108,9 @@ type Sample struct {
 
 	StructPtrWithNoTag *Struct `default:"."`
 	StructWithNoTag    Struct
+
+	Test1 string `default:"Hello"`
+	Test2 string `default:"Hello"`
 }
 
 type EmbeddedKey struct {
@@ -147,7 +150,9 @@ func Test(t *testing.T) {
 		panic(err)
 	}
 
-	sample := &Sample{}
+	sample := &Sample{
+		Test1: "Bye",
+	}
 
 	if err := Set(sample); err != nil {
 		t.Fatalf("it should not return an error: %v", err)
@@ -394,8 +399,23 @@ func Test(t *testing.T) {
 		}
 	})
 
+	t.Run("not original", func(t *testing.T) {
+		if sample.StructPtrWithNoTag == nil {
+			t.Errorf("it recurse into a struct with a tag")
+		}
+		if sample.StructPtrWithNoTag.WithDefault != "foo" {
+			t.Errorf("it recurse into a struct with a tag")
+		}
+		if sample.StructWithNoTag.WithDefault == "foo" {
+			t.Errorf("it should not recurse into a struct without a tag")
+		}
+	})
+
 	t.Run("opt-out", func(t *testing.T) {
-		if sample.NoDefault != nil {
+		if sample.Test1 != "Bye" {
+			t.Errorf("it should be set")
+		}
+		if sample.Test2 != "Hello" {
 			t.Errorf("it should not be set")
 		}
 	})
