@@ -2,16 +2,54 @@ package defaults
 
 import (
 	"fmt"
-	"github.com/kamora/fluid"
-	"math/rand/v2"
 	"reflect"
+	"regexp"
 	"strconv"
-	"strings"
 )
 
 const (
 	tagName = "default"
 )
+
+type parser struct {
+	regexp  *regexp.Regexp
+	handler func(string) string
+}
+
+type configuration struct {
+	Parsers map[string]parser
+}
+
+var (
+	instance = configuration{
+		Parsers: make(map[string]parser),
+	}
+)
+
+func Configure(parsers map[string]func(string) string) error {
+	reg, _ := regexp.Compile("^[A-Za-z0-9_]+$")
+
+	for pattern, target := range parsers {
+		if !reg.MatchString(pattern) {
+			return fmt.Errorf("invalid pattern: %s", pattern)
+		}
+
+		instance.Parsers[pattern] = parser{
+			regexp:  regexp.MustCompile(`%` + pattern + `%`),
+			handler: target,
+		}
+	}
+
+	return nil
+}
+
+func parse(target string) string {
+	for _, pr := range instance.Parsers {
+		target = pr.regexp.ReplaceAllStringFunc(target, pr.handler)
+	}
+
+	return target
+}
 
 func Set(ptr interface{}) error {
 	if reflect.TypeOf(ptr).Kind() != reflect.Ptr {
@@ -27,7 +65,12 @@ func Set(ptr interface{}) error {
 
 	for i := 0; i < t.NumField(); i++ {
 		if defaultVal := t.Field(i).Tag.Get(tagName); defaultVal != "" || t.Field(i).Anonymous {
-			if err := set(v.Field(i), defaultVal); err != nil {
+
+			if !v.Field(i).CanSet() {
+				return fmt.Errorf("failed to set: %s", t.Field(i).Name)
+			}
+
+			if err := set(v.Field(i), parse(defaultVal)); err != nil {
 				return err
 			}
 		}
@@ -37,8 +80,8 @@ func Set(ptr interface{}) error {
 }
 
 func set(field reflect.Value, defaultVal string) error {
-	if !field.CanSet() {
-		return fmt.Errorf("failed to set field: %s", tagName)
+	if field.Kind() == reflect.Struct {
+		return Set(field.Addr().Interface())
 	}
 
 	if field.Kind() == reflect.Ptr {
@@ -101,11 +144,6 @@ func set(field reflect.Value, defaultVal string) error {
 			field.Set(reflect.ValueOf(val).Convert(field.Type()))
 		}
 
-	case reflect.Uintptr:
-		if val, err := strconv.ParseUint(defaultVal, 0, strconv.IntSize); err == nil {
-			field.Set(reflect.ValueOf(uintptr(val)).Convert(field.Type()))
-		}
-
 	case reflect.Float32:
 		if val, err := strconv.ParseFloat(defaultVal, 32); err == nil {
 			field.Set(reflect.ValueOf(float32(val)).Convert(field.Type()))
@@ -119,9 +157,6 @@ func set(field reflect.Value, defaultVal string) error {
 	case reflect.String:
 		field.Set(reflect.ValueOf(parse(defaultVal)).Convert(field.Type()))
 
-	case reflect.Struct:
-		return Set(field.Addr().Interface())
-
 	case reflect.Ptr:
 		return set(field.Elem(), defaultVal)
 
@@ -130,11 +165,4 @@ func set(field reflect.Value, defaultVal string) error {
 	}
 
 	return nil
-}
-
-func parse(target string) string {
-	target = strings.ReplaceAll(target, "%fluid32%", fluid.Encode(uint32(rand.Int32())))
-	target = strings.ReplaceAll(target, "%fluid64%", fluid.Encode(uint64(rand.Int64())))
-
-	return target
 }

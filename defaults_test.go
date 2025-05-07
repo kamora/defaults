@@ -1,8 +1,8 @@
 package defaults
 
 import (
-	"encoding/json"
-	"errors"
+	"github.com/kamora/fluid"
+	"math/rand/v2"
 	"strconv"
 	"testing"
 )
@@ -18,7 +18,6 @@ type (
 	MyUint16  uint16
 	MyUint32  uint32
 	MyUint64  uint64
-	MyUintptr uintptr
 	MyFloat32 float32
 	MyFloat64 float64
 	MyBool    bool
@@ -36,7 +35,6 @@ type Sample struct {
 	Uint16    uint16  `default:"16"`
 	Uint32    uint32  `default:"32"`
 	Uint64    uint64  `default:"64"`
-	Uintptr   uintptr `default:"1"`
 	Float32   float32 `default:"1.32"`
 	Float64   float64 `default:"1.64"`
 	BoolTrue  bool    `default:"true"`
@@ -77,13 +75,15 @@ type Sample struct {
 	Uint64Bin uint64 `default:"0b1000000"`
 
 	IntPtr     *int     `default:"1"`
-	UintPtr    *uint    `default:"1"`
 	Float32Ptr *float32 `default:"1"`
 	BoolPtr    *bool    `default:"true"`
 	StringPtr  *string  `default:"hello"`
 
 	StringUID    string  `default:"%fluid32%"`
 	StringUIDPtr *string `default:"%fluid64%"`
+
+	RandomInt    int  `default:"%rand%"`
+	RandomIntPtr *int `default:"%rand%"`
 
 	EmbeddedKey
 
@@ -97,7 +97,6 @@ type Sample struct {
 	MyUint16    MyUint16  `default:"16"`
 	MyUint32    MyUint32  `default:"32"`
 	MyUint64    MyUint64  `default:"64"`
-	MyUintptr   MyUintptr `default:"1"`
 	MyFloat32   MyFloat32 `default:"1.32"`
 	MyFloat64   MyFloat64 `default:"1.64"`
 	MyBoolTrue  MyBool    `default:"true"`
@@ -131,25 +130,23 @@ type Parent struct {
 	Child *Child `default:"."`
 }
 
-type JSONOnlyType int
+func Test(t *testing.T) {
+	configuration := map[string]func(string) string{
+		"fluid32": func(s string) string {
+			return fluid.Encode(uint32(0))
+		},
+		"fluid64": func(s string) string {
+			return fluid.Encode(uint64(0))
+		},
+		"rand": func(s string) string {
+			return strconv.Itoa(rand.N[int](99) + 1)
+		},
+	}
 
-func (j *JSONOnlyType) UnmarshalJSON(b []byte) error {
-	var tmp string
-	if err := json.Unmarshal(b, &tmp); err != nil {
-		return err
+	if err := Configure(configuration); err != nil {
+		panic(err)
 	}
-	if i, err := strconv.Atoi(tmp); err == nil {
-		*j = JSONOnlyType(i)
-		return nil
-	}
-	if tmp == "one" {
-		*j = 1
-		return nil
-	}
-	return errors.New("cannot unmarshal")
-}
 
-func TestInit(t *testing.T) {
 	sample := &Sample{}
 
 	if err := Set(sample); err != nil {
@@ -196,9 +193,6 @@ func TestInit(t *testing.T) {
 		}
 		if sample.Uint64 != 64 {
 			t.Errorf("it should initialize uint64")
-		}
-		if sample.Uintptr != 1 {
-			t.Errorf("it should initialize uintptr")
 		}
 		if sample.Float32 != 1.32 {
 			t.Errorf("it should initialize float32")
@@ -313,7 +307,7 @@ func TestInit(t *testing.T) {
 		}
 	})
 
-	t.Run("generators", func(t *testing.T) {
+	t.Run("parsers", func(t *testing.T) {
 		if len(sample.StringUID) != 7 {
 			t.Errorf("it should initialize with generators")
 		}
@@ -331,9 +325,6 @@ func TestInit(t *testing.T) {
 	t.Run("pointer types", func(t *testing.T) {
 		if sample.IntPtr == nil || *sample.IntPtr != 1 {
 			t.Errorf("it should initialize int pointer")
-		}
-		if sample.UintPtr == nil || *sample.UintPtr != 1 {
-			t.Errorf("it should initialize uint pointer")
 		}
 		if sample.Float32Ptr == nil || *sample.Float32Ptr != 1 {
 			t.Errorf("it should initialize float32 pointer")
@@ -377,12 +368,6 @@ func TestInit(t *testing.T) {
 		if sample.MyUint64 != 64 {
 			t.Errorf("it should initialize uint64")
 		}
-		if sample.MyUintptr != 1 {
-			t.Errorf("it should initialize uintptr")
-		}
-		if sample.MyFloat32 != 1.32 {
-			t.Errorf("it should initialize float32")
-		}
 		if sample.MyFloat64 != 1.64 {
 			t.Errorf("it should initialize float64")
 		}
@@ -414,13 +399,13 @@ func TestInit(t *testing.T) {
 			t.Errorf("it should not be set")
 		}
 	})
-}
 
-func TestPointerStructMember(t *testing.T) {
-	m := Parent{Child: &Child{Name: "Jim"}}
-	_ = Set(&m)
+	t.Run("pointer", func(t *testing.T) {
+		m := Parent{Child: &Child{Name: "Jim"}}
+		_ = Set(&m)
 
-	if m.Child.Age != 20 {
-		t.Errorf("20 is expected")
-	}
+		if m.Child.Age != 20 {
+			t.Errorf("20 is expected")
+		}
+	})
 }
