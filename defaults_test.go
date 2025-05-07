@@ -1,7 +1,6 @@
 package defaults
 
 import (
-	"github.com/kamora/fluid"
 	"math/rand/v2"
 	"strconv"
 	"testing"
@@ -79,8 +78,8 @@ type Sample struct {
 	BoolPtr    *bool    `default:"true"`
 	StringPtr  *string  `default:"hello"`
 
-	StringUID    string  `default:"%fluid32%"`
-	StringUIDPtr *string `default:"%fluid64%"`
+	StringUID    string  `default:"%test10%"`
+	StringUIDPtr *string `default:"%test20%"`
 
 	RandomInt    int  `default:"%rand%"`
 	RandomIntPtr *int `default:"%rand%"`
@@ -114,8 +113,8 @@ type Sample struct {
 }
 
 type EmbeddedKey struct {
-	StringUIDCombined    string  `default:"%fluid32%.%fluid64%"`
-	StringUIDCombinedPtr *string `default:"%fluid64%.%fluid64%"`
+	StringUIDCombined    string  `default:"%test10%.%test20%"`
+	StringUIDCombinedPtr *string `default:"%test20%.%test20%"`
 }
 
 type Struct struct {
@@ -133,13 +132,29 @@ type Parent struct {
 	Child *Child `default:"."`
 }
 
+var (
+	charset = "abcdefghijklmnopqrstuvwxyz"
+)
+
 func Test(t *testing.T) {
 	configuration := map[string]func(string) string{
-		"fluid32": func(s string) string {
-			return fluid.Encode(uint32(0))
+		"test10": func(s string) string {
+			r := ""
+
+			for i := 0; i < 10; i++ {
+				r += string(charset[rand.N[int](len(charset))])
+			}
+
+			return r
 		},
-		"fluid64": func(s string) string {
-			return fluid.Encode(uint64(0))
+		"test20": func(s string) string {
+			r := ""
+
+			for i := 0; i < 20; i++ {
+				r += string(charset[rand.N[int](len(charset))])
+			}
+
+			return r
 		},
 		"rand": func(s string) string {
 			return strconv.Itoa(rand.N[int](99) + 1)
@@ -313,17 +328,17 @@ func Test(t *testing.T) {
 	})
 
 	t.Run("parsers", func(t *testing.T) {
-		if len(sample.StringUID) != 7 {
-			t.Errorf("it should initialize with generators")
+		if len(sample.StringUID) != 10 {
+			t.Errorf("it should be initialize with generators")
 		}
-		if len(*sample.StringUIDPtr) != 13 {
-			t.Errorf("it should initialize with generators")
+		if len(*sample.StringUIDPtr) != 20 {
+			t.Errorf("it should be initialize with generators")
 		}
-		if len(sample.StringUIDCombined) != 21 {
-			t.Errorf("it should initialize with generators")
+		if len(sample.StringUIDCombined) != 31 {
+			t.Errorf("it should be initialize with generators")
 		}
-		if len(*sample.StringUIDCombinedPtr) != 27 {
-			t.Errorf("it should initialize with generators")
+		if len(*sample.StringUIDCombinedPtr) != 41 {
+			t.Errorf("it should be initialize with generators")
 		}
 	})
 
