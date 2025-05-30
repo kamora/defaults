@@ -4,16 +4,16 @@
 
 The simplest way to initialize struct fields with default values.
 
-# References
+## References
 
 Originally forked from: https://github.com/creasty
 
 Simplified. Redesigned. Reorganized. Refactored.
 
-# Compatibility
+## Compatibility
 No backward compatibility preserved!
 
-# Usage
+## Usage
 
 ```go
 package main
@@ -116,3 +116,7 @@ func main() {
 	//}
 }
 ```
+
+## License
+
+Released under the [MIT License](./LICENSE).
